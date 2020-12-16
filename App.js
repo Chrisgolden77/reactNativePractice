@@ -6,7 +6,7 @@
  * @flow strict-local
  */
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,6 +14,9 @@ import {
   View,
   Text,
   StatusBar,
+  Separator,
+  Button,
+  TouchableHighlight,
 } from 'react-native';
 
 import {
@@ -24,7 +27,17 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
-const App: () => React$Node = () => {
+const App = () => {
+  const [count, setCount] = useState(0);
+  const incrementCount = () => {
+    setCount(count + 1);
+  };
+  const decrementCount = () => {
+    setCount(count + -1);
+  };
+  const resetCount = () => {
+    setCount(0);
+  };
   return (
     <>
       <StatusBar barStyle="dark-content" />
@@ -33,12 +46,64 @@ const App: () => React$Node = () => {
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
           <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
+
           <View style={styles.body}>
+            <View>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  aligntItems: 'center',
+                  justifyContent: 'space-evenly',
+                }}>
+                <TouchableHighlight
+                  accessibilityLabel="increment button"
+                  onPress={incrementCount}
+                  underlayColor="lightgreen"
+                  style={{
+                    backgroundColor: 'green',
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 150,
+                    height: 50,
+                    margin: 5,
+                  }}>
+                  <View>
+                    <Text style={[styles.sectionTitle, {color: 'white'}]}>
+                      Increment
+                    </Text>
+                  </View>
+                </TouchableHighlight>
+                <TouchableHighlight
+                  accessibilityLabel="decrement button"
+                  onPress={decrementCount}
+                  underlayColor="lightpink"
+                  style={{
+                    backgroundColor: 'red',
+                    borderRadius: 20,
+                    color: 'white',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 150,
+                    height: 50,
+                    margin: 5,
+                  }}>
+                  <View>
+                    <Text style={[styles.sectionTitle, {color: 'white'}]}>Decrement</Text>
+                  </View>
+                </TouchableHighlight>
+              </View>
+
+              <Button
+                accessibilityLabel="increment count button"
+                title="Reset Count"
+                color="orange"
+                onPress={resetCount}></Button>
+
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>{count}</Text>
+              </View>
+            </View>
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Step One</Text>
               <Text style={styles.sectionDescription}>
