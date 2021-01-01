@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-native/no-inline-styles */
 /**
  * Sample React Native App
  * https://github.com/facebook/react-native
@@ -6,7 +8,7 @@
  * @flow strict-local
  */
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useReducer, useState} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,29 +16,43 @@ import {
   View,
   Text,
   StatusBar,
-  Separator,
   Button,
   TouchableHighlight,
 } from 'react-native';
+import {useAsyncStorage} from '@react-native-async-storage/async-storage';
+import {Header, Colors} from 'react-native/Libraries/NewAppScreen';
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
+const useCountReducer = (count, {type, value}) => {
+  switch (type) {
+    case 'decrement':
+      return count - 1;
+    case 'increment':
+      return count + 1;
+    case 'reset':
+      return 0;
+    case 'set':
+      return value;
+    default:
+      return count;
+  }
+};
 const App = () => {
-  const [count, setCount] = useState(0);
-  const incrementCount = () => {
-    setCount(count + 1);
+  const [count, dispatchCount] = useReducer(useCountReducer, 0);
+  const {getItem, setItem} = useAsyncStorage('@count');
+  useEffect(() => {
+    readCountFromStorage();
+  }, []);
+
+  const readCountFromStorage = async () => {
+    const storedCount = await getItem();
+    if (storedCount) {
+      dispatchCount({type: 'set', value: JSON.parse(storedCount)});
+    }
+    return;
   };
-  const decrementCount = () => {
-    setCount(count + -1);
-  };
-  const resetCount = () => {
-    setCount(0);
+  const saveCountToStorage = async () => {
+    await setItem(JSON.stringify(count));
+    alert('Successfully Saved Count!')
   };
   return (
     <>
@@ -46,27 +62,26 @@ const App = () => {
           contentInsetAdjustmentBehavior="automatic"
           style={styles.scrollView}>
           <Header />
-
           <View style={styles.body}>
             <View>
+              <View style={styles.sectionContainer}>
+                <Text style={{...styles.sectionTitle, textAlign: 'center'}}>
+                  {count}
+                </Text>
+              </View>
               <View
                 style={{
-                  flexDirection: 'row',
                   aligntItems: 'center',
+                  flexDirection: 'row',
                   justifyContent: 'space-evenly',
                 }}>
                 <TouchableHighlight
                   accessibilityLabel="increment button"
-                  onPress={incrementCount}
+                  onPress={() => dispatchCount({type: 'increment'})}
                   underlayColor="lightgreen"
                   style={{
                     backgroundColor: 'green',
-                    borderRadius: 20,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 150,
-                    height: 50,
-                    margin: 5,
+                    ...styles.touchableHighlightButton,
                   }}>
                   <View>
                     <Text style={[styles.sectionTitle, {color: 'white'}]}>
@@ -76,60 +91,45 @@ const App = () => {
                 </TouchableHighlight>
                 <TouchableHighlight
                   accessibilityLabel="decrement button"
-                  onPress={decrementCount}
+                  onPress={() => dispatchCount({type: 'decrement'})}
                   underlayColor="lightpink"
                   style={{
                     backgroundColor: 'red',
-                    borderRadius: 20,
-                    color: 'white',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 150,
-                    height: 50,
-                    margin: 5,
+                    ...styles.touchableHighlightButton,
                   }}>
                   <View>
-                    <Text style={[styles.sectionTitle, {color: 'white'}]}>Decrement</Text>
+                    <Text style={[styles.sectionTitle, {color: 'white'}]}>
+                      Decrement
+                    </Text>
                   </View>
                 </TouchableHighlight>
               </View>
 
               <Button
                 accessibilityLabel="increment count button"
+                title="Get Saved Count"
+                color="salmon"
+                onPress={readCountFromStorage}
+              />
+              <Button
+                accessibilityLabel="increment count button"
                 title="Reset Count"
                 color="orange"
-                onPress={resetCount}></Button>
-
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>{count}</Text>
-              </View>
+                onPress={() => dispatchCount({type: 'reset'})}
+              />
+              <Button
+                accessibilityLabel="set count button"
+                title="set Count to 69"
+                color="purple"
+                onPress={() => dispatchCount({type: 'set', value: 69})}
+              />
+              <Button
+                accessibilityLabel="set count button"
+                title="Save Current Count"
+                color="steelblue"
+                onPress={saveCountToStorage}
+              />
             </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -138,8 +138,17 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
+  touchableHighlightButton: {
+    borderRadius: 20,
+    color: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 150,
+    height: 50,
+    margin: 15,
+  },
   scrollView: {
-    backgroundColor: Colors.lighter,
+    backgroundColor: Colors.dark,
   },
   engine: {
     position: 'absolute',
