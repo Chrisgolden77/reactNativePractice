@@ -8,7 +8,7 @@
  * @flow strict-local
  */
 
-import React, {useEffect, useReducer, useState} from 'react';
+import React, {useReducer} from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -19,43 +19,50 @@ import {
   Button,
   TouchableHighlight,
 } from 'react-native';
-import {useAsyncStorage} from '@react-native-async-storage/async-storage';
 import {Header, Colors} from 'react-native/Libraries/NewAppScreen';
+import {useCountReducer} from '../utilities/reducers';
+import {handleStorage} from '../utilities/storage';
 
-const useCountReducer = (count, {type, value}) => {
-  switch (type) {
-    case 'decrement':
-      return count - 1;
-    case 'increment':
-      return count + 1;
-    case 'reset':
-      return 0;
-    case 'set':
-      return value;
-    default:
-      return count;
-  }
-};
-const App = () => {
+export const HomeScreen = ({route, navigation}) => {
   const [count, dispatchCount] = useReducer(useCountReducer, 0);
-  const {getItem, setItem} = useAsyncStorage('@count');
-  useEffect(() => {
-    readCountFromStorage();
-  }, []);
-
-  const readCountFromStorage = async () => {
-    const storedCount = await getItem();
-    if (storedCount) {
-      dispatchCount({type: 'set', value: JSON.parse(storedCount)});
+  const getStoredCount = async () => {
+    try {
+      const storedCount = await handleStorage({
+        type: 'getOne',
+        keys: ['@count'],
+      });
+      if (!storedCount) throw 'No count found in storage!';
+      await dispatchCount({type: 'set', value: storedCount});
+    } catch (error) {
+      alert(error);
     }
-    return;
   };
-  const saveCountToStorage = async () => {
-    await setItem(JSON.stringify(count));
-    alert('Successfully Saved Count!')
+  const removeStoredCount = async () => {
+    try {
+      const storedCount = await handleStorage({
+        type: 'removeOne',
+        keys: ['@count'],
+      });
+      alert('Count removed!');
+      await dispatchCount({type: 'set', value: 0});
+    } catch (error) {
+      alert(error);
+    }
+  };``
+  const storeCurrentCount = async () => {
+    try {
+      await handleStorage({
+        type: 'set',
+        keys: ['@count'],
+        value: count,
+      });
+      alert('Successfully stored count!');
+    } catch (error) {
+      alert('Something went wrong!');
+    }
   };
   return (
-    <>
+    <View>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView>
         <ScrollView
@@ -109,7 +116,7 @@ const App = () => {
                 accessibilityLabel="increment count button"
                 title="Get Saved Count"
                 color="salmon"
-                onPress={readCountFromStorage}
+                onPress={getStoredCount}
               />
               <Button
                 accessibilityLabel="increment count button"
@@ -127,13 +134,19 @@ const App = () => {
                 accessibilityLabel="set count button"
                 title="Save Current Count"
                 color="steelblue"
-                onPress={saveCountToStorage}
+                onPress={storeCurrentCount}
+              />
+              <Button
+                accessibilityLabel="set count button"
+                title="Remove Stored Count"
+                color="red"
+                onPress={removeStoredCount}
               />
             </View>
           </View>
         </ScrollView>
       </SafeAreaView>
-    </>
+    </View>
   );
 };
 
@@ -185,4 +198,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default HomeScreen;
