@@ -129,7 +129,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.reactnativepractice"
+        applicationId "com.golden.reactnativepractice"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
